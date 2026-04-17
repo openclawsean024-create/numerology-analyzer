@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>生命靈數分析器</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-light: #818cf8;
+      --primary-dark: #4f46e5;
+      --secondary: #f59e0b;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text: #1e293b;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+      --radius: 16px;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --card-bg: #1e293b;
+        --text: #f1f5f9;
+        --text-muted: #94a3b8;
+        --border: #334155;
+        --shadow: 0 4px 6px -1px rgba(0,0,0,0.4);
+      }
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px;
+      line-height: 1.6;
+    }
+    .container { max-width: 640px; margin: 0 auto; }
+    header { text-align: center; margin-bottom: 32px; }
+    header h1 { font-size: 1.75rem; font-weight: 700; color: var(--primary); margin-bottom: 8px; }
+    header p { color: var(--text-muted); font-size: 0.95rem; }
+    
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
+    
+    .input-group { margin-bottom: 16px; }
+    .input-group label { display: block; font-weight: 500; margin-bottom: 6px; font-size: 0.9rem; }
+    .input-group input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      background: var(--card-bg);
+      color: var(--text);
+      transition: border-color 0.2s;
+    }
+    .input-group input:focus { outline: none; border-color: var(--primary); }
+    .date-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+    
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border: none;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+    }
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); transform: translateY(-1px); }
+    .btn-secondary { background: var(--border); color: var(--text); }
+    .btn-secondary:hover { background: var(--text-muted); color: white; }
+    
+    .error { color: #ef4444; font-size: 0.85rem; margin-top: 6px; display: none; }
+    .error.show { display: block; }
+    
+    #report { display: none; }
+    #report.show { display: block; }
+    
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 24px 0 12px;
+      color: var(--primary);
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 6px;
+    }
+    
+    .numbers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .number-card {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: white;
+      border-radius: 12px;
+      padding: 16px 12px;
+      text-align: center;
+    }
+    .number-card .label { font-size: 0.75rem; opacity: 0.9; margin-bottom: 4px; }
+    .number-card .value { font-size: 2.5rem; font-weight: 700; line-height: 1.1; }
+    .number-card .sub { font-size: 0.7rem; opacity: 0.8; margin-top: 4px; }
+    
+    .report-text { font-size: 0.95rem; line-height: 1.8; margin-bottom: 12px; }
+    .keywords { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
+    .keyword {
+      background: var(--primary-light);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+    }
+    
+    #radarCanvas { width: 100%; max-width: 320px; margin: 16px auto; display: block; }
+    
+    .action-row { display: flex; gap: 12px; margin-top: 20px; }
+    .action-row .btn { flex: 1; }
+    
+    .share-url {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 0.8rem;
+      word-break: break-all;
+      margin-top: 12px;
+      display: none;
+    }
+    .share-url.show { display: block; }
+    
+    .copy-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--text);
+      color: var(--bg);
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      transition: transform 0.3s;
+      z-index: 100;
+    }
+    .copy-toast.show { transform: translateX(-50%) translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>✨ 生命靈數分析器</h1>
+      <p>輸入姓名與出生日期，探索你的數字密碼</p>
+    </header>
+    
+    <div class="card" id="inputSection">
+      <div class="input-group">
+        <label>姓名（中英文皆可）</label>
+        <input type="text" id="nameInput" placeholder="例如：王小明 或 John Doe" maxlength="50">
+        <div class="error" id="nameError">請輸入至少 2 個字元的姓名</div>
+      </div>
+      
+      <div class="input-group">
+        <label>出生日期</label>
+        <div class="date-row">
+          <input type="number" id="birthYear" placeholder="年" min="1900" max="2026">
+          <input type="number" id="birthMonth" placeholder="月" min="1" max="12">
+          <input type="number" id="birthDay" placeholder="日" min="1" max="31">
+        </div>
+        <div class="error" id="dateError">請填寫完整的出生年月日</div>
+      </div>
+      
+      <button class="btn btn-primary" onclick="analyze()">🔮 開始分析</button>
+    </div>
+    
+    <div id="report">
+      <div class="card">
+        <h2 class="section-title">📊 五大核心數字</h2>
+        <div class="numbers-grid" id="numbersGrid"></div>
+        
+        <h2 class="section-title">🧠 性格特質</h2>
+        <div id="personalitySection"></div>
+        
+        <h2 class="section-title">💼 事業方向</h2>
+        <div id="careerSection"></div>
+        
+        <h2 class="section-title">💕 感情建議</h2>
+        <div id="loveSection"></div>
+        
+        <h2 class="section-title">🔮 2026 年度流年</h2>
+        <div id="yearSection"></div>
+        
+        <h2 class="section-title">🕸️ 性格雷達圖</h2>
+        <canvas id="radarCanvas" width="320" height="320"></canvas>
+        
+        <div class="action-row">
+          <button class="btn btn-secondary" onclick="copyReport()">📋 複製報告</button>
+          <button class="btn btn-secondary" onclick="shareReport()">🔗 分享連結</button>
+        </div>
+        <div class="share-url" id="shareUrl"></div>
+        <button class="btn btn-primary" onclick="resetAnalysis()" style="margin-top:12px">🔄 重新分析</button>
+      </div>
+    </div>
+  </div>
+  
+  <div class="copy-toast" id="toast">已複製到剪貼簿！</div>
+  
+  <script>
+    // 康熙筆畫數據
+    const strokes = {
+      '一':1,'二':2,'三':3,'四':3,'五':4,'六':4,'七':5,'八':6,'九':6,'十':5,
+      '百':6,'千':3,'口':3,'土':3,'大':3,'女':3,'子':3,'寸':3,'小':3,'工':3,
+      '山':3,'川':3,'日':4,'月':4,'木':4,'水':4,'火':4,'王':4,'天':4,'心':4,
+      '手':4,'文':4,'方':4,'比':4,'牙':4,'毛':4,'气':4,'父':4,'月':4,'片':4,
+      '牛':4,'犬':4,'戈':4,'才':3,'田':5,'疋':5,'癶':7,'白':5,'皮':5,'皿':5,
+      '目':5,'矛':5,'矢':5,'石':5,'示':5,'禾':5,'穴':5,'立':5,'竹':6,'米':6,
+      '糸':6,'網':6,'羊':6,'羽':6,'老':6,'而':6,'耒':6,'耳':6,'肉':6,'臣':6,
+      '自':6,'至':6,'臼':6,'舌':6,'舛':6,'舟':6,'艮':6,'色':6,'虍':6,'虫':6,
+      '血':6,'行':6,'衣':6,'西':6,'見':7,'角':7,'言':7,'谷':7,'豆':7,'豕':7,
+      '豸':7,'貝':7,'赤':7,'走':7,'足':7,'身':7,'車':7,'辛':7,'辰':7,'辵':7,
+      '邑':7,'酉':7,'釆':7,'里':7,'金':8,'長':8,'門':8,'阜':8,'隶':8,'隹':8,
+      '雨':8,'青':8,'非':8,'面':9,'革':9,'韋':9,'音':9,'風':9,'飛':9,'食':9,
+      '首':9,'香':9,'馬':10,'骨':10,'高':10,'髟':10,'鬥':10,'魚':11,'鳥':11,
+      '鹵':12,'鹿':11,'麥':11,'麻':11,'黃':12,'黍':12,'黑':12,'黹':12,'無':12,
+      '堯':12,'舞':14,'齊':14,'龍':16,'龜':16,'龠':19
+    };
+    
+    const vowelChars = 'aeiouAEIOUāēīōūǖĀĒĪŌŪǅ';
+    const consonants = 'bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ';
+    
+    function getStroke(ch) {
+      if (/[a-zA-Z]/.test(ch)) return 1;
+      if (/[0-9]/.test(ch)) return 0;
+      return strokes[ch] || 0;
+    }
+    
+    function isVowel(ch) {
+      return vowelChars.includes(ch);
+    }
+    
+    function isConsonant(ch) {
+      return consonants.includes(ch);
+    }
+    
+    function digitSum(n) {
+      while (n > 9 && n !== 11 && n !== 22 && n !== 33) {
+        n = String(n).split('').reduce((a, b) => a + parseInt(b), 0);
+      }
+      return n;
+    }
+    
+    function calcLifePath(y, m, d) {
+      return digitSum(y + m + d);
+    }
+    
+    function calcDestiny(name) {
+      let sum = 0;
+      for (const ch of name) {
+        if (/[a-zA-Z]/.test(ch)) {
+          const code = ch.toUpperCase().charCodeAt(0) - 64;
+          sum += code;
+        } else {
+          sum += getStroke(ch);
+        }
+      }
+      return digitSum(sum);
+    }
+    
+    function calcSoul(name) {
+      let sum = 0;
+      for (const ch of name) {
+        if (/[a-zA-Z]/.test(ch)) {
+          if (isVowel(ch)) sum += ch.toUpperCase().charCodeAt(0) - 64;
+        } else {
+          if (isVowel(ch)) sum += getStroke(ch);
+        }
+      }
+      return digitSum(sum);
+    }
+    
+    function calcPersonality(name) {
+      let sum = 0;
+      for (const ch of name) {
+        if (/[a-zA-Z]/.test(ch)) {
+          if (isConsonant(ch)) sum += ch.toUpperCase().charCodeAt(0) - 64;
+        } else {
+          if (!isVowel(ch) && getStroke(ch) > 0) sum += getStroke(ch);
+        }
+      }
+      return digitSum(sum);
+    }
+    
+    function calcBirthday(d) {
+      return { main: digitSum(d), raw: d };
+    }
+    
+    // 數字解讀資料
+    const lifePathDesc = {
+      1: '你是一個天生的領導者，擁有強烈的獨立精神和創造力。你勇於冒險，喜歡開創新局，不喜歡被約束。決策果斷，行動力強，但有時可能顯得固執。',
+      2: '你天生具有調解者的天賦，善于在兩方之間建立平衡。富有同理心，直覺敏銳，喜歡與人合作。你善於表達和溝通，但有時過於在意他人的看法。',
+      3: '你是一個充滿創意和表達力的數字。擁有出色的溝通能力，藝術天賦過人，性格開朗且具有吸引力。你善於激勵他人，但有時缺乏專注力。',
+      4: '你是一個腳踏實地、注重細節的人。勤奮可靠，組織能力強，擅長建立穩固的基礎。務實的態度讓你受人信賴，但有時過於保守。',
+      5: '你是一個熱愛自由、渴望冒險的靈魂。適應力強，多才多藝，喜歡體驗新事物。善於社交，魅力十足，但有時缺乏承諾和耐心。',
+      6: '你是一個充滿愛與責任感的守護者。重視家庭和諧，善於照顧他人，審美能力出眾。樂於奉獻，但有時過度操勞或過度承擔他人的問題。',
+      7: '你是一個追求真理和智慧的探索者。內省傾向強，喜歡獨處思考，對神秘事物有濃厚的興趣。分析能力出眾，但有時可能過度理想化。',
+      8: '你是一個天生的企業家和成功者。對權力和成就有強烈的渴望，理財能力過人。務實且有野心，但有時可能過度重視物質而忽略精神層面。',
+      9: '你是一個具有人道主義精神的博愛者。富有同理心，藝術氣質浓厚，喜歡幫助他人。重感情且有智慧，但有時不擅於拒絕他人而被消耗。',
+      11: '你是一個具有直覺和靈性使命的大師數字。敏感且富有洞察力，常能感知他人看不見的事物。創意無限，但容易感到孤獨和被誤解。',
+      22: '你是個具有將夢想化為現實的大師建造者。擁有卓越的組織能力和執行力，能完成宏大計畫。肩負重大責任，需要學會平衡理想與現實。',
+      33: '你是個無私奉獻的靈性導師。擁有治愈和啟發他人的天賦，常犧牲小我完成大我。精神力量強大，但需要避免過度犧牲自己的需求。'
+    };
+    
+    const personalityKeywords = {
+      1: ['獨立', '自信', '創新', '勇敢', '領導', '進取', '開創', '果斷'],
+      2: ['溫和', '直覺', '合作', '同理', '協調', '包容', '敏感', '藝術'],
+      3: ['創意', '表達', '魅力', '樂觀', '社交', '靈感', '活潑', '想像'],
+      4: ['務實', '勤奮', '穩重', '可靠', '組織', '責任', '毅力', '保守'],
+      5: ['自由', '冒險', '適應', '多才', '熱情', '好奇', '魅力', '不羈'],
+      6: ['奉獻', '慈愛', '責任', '和諧', '保護', '美學', '忠誠', '照顧'],
+      7: ['智慧', '內省', '靈性', '分析', '獨處', '直覺', '神秘', '理想'],
+      8: ['野心', '成功', '權力', '自信', '掌控', '務實', '領導', '豐盛'],
+      9: ['博愛', '慈悲', '理想', '智慧', '奉獻', '藝術', '浪漫', '人道'],
+      11: ['靈性', '直覺', '啟發', '敏感', '夢想', '創造', '洞察', '使命'],
+      22: ['建造', '實踐', '組織', '大師', '力量', '成就', '責任', '建設'],
+      33: ['無私', '教導', '治愈', '靈性', '奉獻', '慈愛', '引導', '犧牲']
+    };
+    
+    const careerRecs = {
+      1: ['創業家', '管理顧問', '企業主', '創意總監', '政治家'],
+      2: ['調解員', '外交官', '人力資源', '心理諮商師', '藝術家'],
+      3: ['設計師', '演說家', '作家', '演員', '音樂製作人'],
+      4: ['建築師', '工程師', '會計師', '管理分析師', '品質管控'],
+      5: ['旅遊業者', '業務員', '記者', '活動策劃', '外交人員'],
+      6: ['醫護人員', '教師', '社會工作者', '室內設計師', '餐旅業'],
+      7: ['科學家', '研究員', '哲學家', '心理學家', '占星師'],
+      8: ['企業執行長', '投資銀行家', '房地產開發', '律師', '政治家'],
+      9: ['人道救援', '非營利組織', '藝術家', '治療師', '作家'],
+      11: ['靈性導師', '疗愈師', '直覺顧問', '發明家', '預言家'],
+      22: ['大型計畫經理', '建築大師', '房產開發商', '執行長', '改革者'],
+      33: ['精神領袖', '靈性導師', '慈善機構創辦人', '疗愈大師', '教育家']
+    };
+    
+    const loveAdvice = {
+      1: ['學習傾聽伴侶的想法，不要總是主導一切', '表達情感時練習柔和一些', '接受伴侶的不同意見是成長的開始', '獨立的同時也要學會依賴', '避免過度競爭心態影響感情'],
+      2: ['勇敢表達自己的需求，不要總是隱忍', '建立健康的界線，學會說不', '過度在意他人眼光會伤害關係', '培養自我價值感，不依賴他人肯定', '平衡付出與接受的關係'],
+      3: ['專注力是關係穩定的關鍵', '承諾需要行動來證明', '學習面對關係中的平淡', '不要太在意表面的浪漫', '真誠的溝通比甜言蜜語更重要'],
+      4: ['接受改變讓關係更有活力', '過度控制會讓伴侶感到窒息', '偶爾打破常規增加生活情趣', '學習表達感謝與愛意', '過度防備會阻礙親密關係'],
+      5: ['穩定性是長期關係的基礎', '自由不等於不負責任', '學習做出並遵守承諾', '避免過度追逐新鮮感', '深入了解比廣泛交友更重要'],
+      6: ['學會放手，不要過度控制', '照顧他人前先照顧好自己', '設定合理的期望值', '接受伴侶的不完美', '過度犧牲會造成怨恨'],
+      7: ['打開心扉讓伴侶更了解你', '過度分析會阻礙感受', '獨處與相處需要平衡', '信任比懷疑更能親密', '學會接受不確定的關係'],
+      8: ['平衡權力關係，平等相處', '事業成功不等於感情成功', '學習溫柔表達而非命令', '財務控制過度會破壞信任', '尊重伴侶的獨立性'],
+      9: ['學會設定底線，不要過度付出', '接受愛也要學會給予', '放下救世主情結', '學習面對關係中的衝突', '照顧自己的需求同樣重要'],
+      11: ['學會在靈性與現實間取得平衡', '敏感的天賦需要用在正面的地方', '避免過度依賴直覺而忽略溝通', '建立穩定的情感支持系統', '學會區分助人與介入'],
+      22: ['將建造的能力用在關係經營上', '宏大的計畫需要伴侶共同參與', '學習柔軟與彈性', '過度強調掌控會適得其反', '與伴侶共同成長而非單方面付出'],
+      33: ['先學會愛自己再愛別人', '無條件的愛需要智慧', '照顧好自己的身心', '設定健康的界線', '奉獻但不迷失自我']
+    };
+    
+    const yearMeanings = {
+      1: '今年是嶄新開始的一年，你將迎來新的機會和挑戰。勇敢邁出第一步，舊有的限制將被打破。保持開放的心態，迎接生命帶來的驚喜。',
+      2: '今年是合作與耐心的一年。你將在人際關係中找到新的平衡點，貴人運旺盛。學會等待時機，用柔和的方式化解衝突，豐收將在年底到來。',
+      3: '今年是創意爆發的一年。社交運活絡，適合拓展人脈、學習新技能。保持童心與幽默感，讓生活充滿樂趣與驚喜，但需注意財務管理。',
+      4: '今年是腳踏實地、鞏固根基的一年。工作上可能有較多責任，但努力將被看見。適合處理長期計畫、學習理財，稳健前進會帶來安全感。',
+      5: '今年是突破與自由的一年。你可能會遇到意想不到的變化，舊有模式將被打破。保持彈性與好奇心，擁抱改變將帶來新的視野與可能。',
+      6: '今年是聚焦家庭與關係的一年。可能有結婚、搬家或家庭聚會等事項。適合修復人際關係、承擔責任，但要注意別過度犧牲自己的需求。',
+      7: '今年是內省與靈性成長的一年。適合獨處、冥想、閱讀和深度思考。表面的成功可能不如內在的平靜重要，信任自己的直覺會帶來指引。',
+      8: '今年是豐盛與成就的一年。事業和財務可能有重大突破，權威人物可能給予支持。保持野心但不忘記道德底線，你的努力將獲得回報。',
+      9: '今年是結束與放下的一年。過去的某些章節將畫上句點，某些關係或事業可能終結。這是蛻变的阵痛期，為新的開始騰出空間。',
+      11: '今年是靈性覺醒的高峰年。直覺將異常敏銳，可能接收到重要的靈感或預言。保持靜心與開放，信任內在的聲音，你的天命正在展現。',
+      22: '今年是實踐大計畫的年份。你有機會完成具有長期影響力的重要事項。善用你的組織能力，與志同道合的人合作，實現宏大的願景。',
+      33: '今年是靈性奉獻的年份。你的存在將對他人產生深遠的影響。疗愈和教導的能量很強，但需注意自己的身心狀態，避免過度透支。'
+    };
+    
+    const currentYear = 2026;
+    
+    let currentData = null;
+    
+    function validateInputs() {
+      const name = document.getElementById('nameInput').value.trim();
+      const year = parseInt(document.getElementById('birthYear').value);
+      const month = parseInt(document.getElementById('birthMonth').value);
+      const day = parseInt(document.getElementById('birthDay').value);
+      
+      let valid = true;
+      
+      if (name.length < 2) {
+        document.getElementById('nameError').classList.add('show');
+        valid = false;
+      } else {
+        document.getElementById('nameError').classList.remove('show');
+      }
+      
+      if (!year || !month || !day || month < 1 || month > 12 || day < 1 || day > 31) {
+        document.getElementById('dateError').classList.add('show');
+        valid = false;
+      } else {
+        document.getElementById('dateError').classList.remove('show');
+      }
+      
+      return valid ? { name, year, month, day } : null;
+    }
+    
+    function analyze() {
+      const data = validateInputs();
+      if (!data) return;
+      
+      const lifePath = calcLifePath(data.year, data.month, data.day);
+      const destiny = calcDestiny(data.name);
+      const soul = calcSoul(data.name);
+      const personality = calcPersonality(data.name);
+      const birthday = calcBirthday(data.day);
+      const personalYear = digitSum(lifePath + currentYear);
+      
+      currentData = {
+        name: data.name,
+        year: data.year,
+        month: data.month,
+        day: data.day,
+        lifePath, destiny, soul, personality, birthday, personalYear
+      };
+      
+      renderReport(currentData);
+      document.getElementById('inputSection').style.display = 'none';
+      document.getElementById('report').classList.add('show');
+    }
+    
+    function renderReport(d) {
+      // Numbers grid
+      const grid = document.getElementById('numbersGrid');
+      grid.innerHTML = `
+        <div class="number-card"><div class="label">先天數</div><div class="value">${d.lifePath}</div><div class="sub">Life Path</div></div>
+        <div class="number-card"><div class="label">命運數</div><div class="value">${d.destiny}</div><div class="sub">Expression</div></div>
+        <div class="number-card"><div class="label">靈魂數</div><div class="value">${d.soul}</div><div class="sub">Soul Urge</div></div>
+        <div class="number-card"><div class="label">個性數</div><div class="value">${d.personality}</div><div class="sub">Personality</div></div>
+        <div class="number-card"><div class="label">生日數</div><div class="value">${d.birthday.main}</div><div class="sub">(${d.birthday.raw})</div></div>
+      `;
+      
+      // Personality
+      const keywords = personalityKeywords[d.lifePath] || personalityKeywords[9];
+      document.getElementById('personalitySection').innerHTML = `
+        <p class="report-text">${lifePathDesc[d.lifePath] || lifePathDesc[9]}</p>
+        <div class="keywords">${keywords.map(k => `<span class="keyword">${k}</span>`).join('')}</div>
+      `;
+      
+      // Career
+      const careers = careerRecs[d.destiny] || careerRecs[9];
+      document.getElementById('careerSection').innerHTML = `
+        <p class="report-text">根據你的命運數 ${d.destiny}，以下方向可能特別適合你：</p>
+        <div class="keywords">${careers.map(c => `<span class="keyword">${c}</span>`).join('')}</div>
+      `;
+      
+      // Love
+      const love = loveAdvice[d.soul] || loveAdvice[d.personality] || loveAdvice[9];
+      document.getElementById('loveSection').innerHTML = `
+        <p class="report-text">基於你的靈魂數 ${d.soul} 與個性數 ${d.personality}，以下是一些感情相處建議：</p>
+        <ul style="padding-left:20px;margin-top:8px;">
+          ${love.slice(0, 5).map(l => `<li class="report-text" style="margin-bottom:4px">${l}</li>`).join('')}
+        </ul>
+      `;
+      
+      // Year
+      document.getElementById('yearSection').innerHTML = `
+        <p class="report-text"><strong>流年數：${d.personalYear}</strong></p>
+        <p class="report-text">${yearMeanings[d.personalYear] || yearMeanings[9]}</p>
+      `;
+      
+      // Radar
+      drawRadar(d);
+    }
+    
+    function drawRadar(d) {
+      const canvas = document.getElementById('radarCanvas');
+      const ctx = canvas.getContext('2d');
+      const w = canvas.width;
+      const h = canvas.height;
+      const cx = w / 2;
+      const cy = h / 2;
+      const r = Math.min(w, h) / 2 - 40;
+      
+      ctx.clearRect(0, 0, w, h);
+      
+      const labels = ['膽識', '創造力', '直覺', '執行力', '情感', '理性'];
+      const values = [
+        d.lifePath / 9,
+        d.destiny / 9,
+        d.soul / 9,
+        d.personality / 9,
+        d.birthday.main / 9,
+        (11 - d.lifePath % 10) / 9
+      ];
+      
+      const n = 6;
+      const step = (Math.PI * 2) / n;
+      
+      // Draw rings
+      ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || '#e2e8f0';
+      ctx.lineWidth = 1;
+      for (let ring = 1; ring <= 3; ring++) {
+        ctx.beginPath();
+        for (let i = 0; i <= n; i++) {
+          const angle = i * step - Math.PI / 2;
+          const pr = (r / 3) * ring;
+          const x = cx + pr * Math.cos(angle);
+          const y = cy + pr * Math.sin(angle);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+      
+      // Draw axes
+      for (let i = 0; i < n; i++) {
+        const angle = i * step - Math.PI / 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.lineTo(cx + r * Math.cos(angle), cy + r * Math.sin(angle));
+        ctx.stroke();
+        
+        // Labels
+        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#1e293b';
+        ctx.font = '12px "Noto Sans TC"';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        const lx = cx + (r + 20) * Math.cos(angle);
+        const ly = cy + (r + 20) * Math.sin(angle);
+        ctx.fillText(labels[i], lx, ly);
+      }
+      
+      // Draw data polygon
+      ctx.beginPath();
+      for (let i = 0; i <= n; i++) {
+        const idx = i % n;
+        const angle = idx * step - Math.PI / 2;
+        const pr = values[idx] * r;
+        const x = cx + pr * Math.cos(angle);
+        const y = cy + pr * Math.sin(angle);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.fillStyle = 'rgba(99, 102, 241, 0.3)';
+      ctx.fill();
+      ctx.strokeStyle = '#6366f1';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      
+      // Data points
+      for (let i = 0; i < n; i++) {
+        const angle = i * step - Math.PI / 2;
+        const pr = values[i] * r;
+        const x = cx + pr * Math.cos(angle);
+        const y = cy + pr * Math.sin(angle);
+        ctx.beginPath();
+        ctx.arc(x, y, 4, 0, Math.PI * 2);
+        ctx.fillStyle = '#6366f1';
+        ctx.fill();
+      }
+    }
+    
+    function copyReport() {
+      if (!currentData) return;
+      const d = currentData;
+      let text = `✨ 生命靈數分析報告\n`;
+      text += `姓名：${d.name}\n`;
+      text += `出生：${d.year}/${d.month}/${d.day}\n\n`;
+      text += `【五大核心數字】\n`;
+      text += `先天數(Life Path)：${d.lifePath}\n`;
+      text += `命運數(Expression)：${d.destiny}\n`;
+      text += `靈魂數(Soul Urge)：${d.soul}\n`;
+      text += `個性數(Personality)：${d.personality}\n`;
+      text += `生日數(Birthday)：${d.birthday.main}（${d.birthday.raw}日）\n\n`;
+      text += `【性格特質】\n${lifePathDesc[d.lifePath] || ''}\n\n`;
+      text += `【事業方向】\n${(careerRecs[d.destiny] || []).join('、')}\n\n`;
+      text += `【感情建議】\n${((loveAdvice[d.soul] || loveAdvice[9]) || []).slice(0, 5).map(l => '• ' + l).join('\n')}\n\n`;
+      text += `【${currentYear}年度流年】(${d.personalYear})\n${yearMeanings[d.personalYear] || ''}\n`;
+      text += `\n產生於生命靈數分析器`;
+      
+      navigator.clipboard.writeText(text).then(() => {
+        const toast = document.getElementById('toast');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2000);
+      });
+    }
+    
+    function shareReport() {
+      if (!currentData) return;
+      const d = currentData;
+      const params = new URLSearchParams({
+        n: d.name,
+        y: d.year,
+        m: d.month,
+        d: d.day
+      });
+      const url = `${location.origin}${location.pathname}?${params.toString()}`;
+      document.getElementById('shareUrl').textContent = url;
+      document.getElementById('shareUrl').classList.add('show');
+    }
+    
+    function resetAnalysis() {
+      document.getElementById('inputSection').style.display = 'block';
+      document.getElementById('report').classList.remove('show');
+      document.getElementById('shareUrl').classList.remove('show');
+      currentData = null;
+    }
+    
+    // Auto-fill from URL params
+    function checkUrlParams() {
+      const params = new URLSearchParams(location.search);
+      if (params.has('n') && params.has('y') && params.has('m') && params.has('d')) {
+        document.getElementById('nameInput').value = params.get('n');
+        document.getElementById('birthYear').value = params.get('y');
+        document.getElementById('birthMonth').value = params.get('m');
+        document.getElementById('birthDay').value = params.get('d');
+        analyze();
+      }
+    }
+    
+    checkUrlParams();
+  </script>
+</body>
+</html>
