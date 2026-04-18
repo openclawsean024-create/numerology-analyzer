@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-TW" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -65,30 +65,52 @@
       --t-slow: 480ms;
     }
     
-    /* ===== LIGHT THEME OVERRIDE ===== */
-    @media (prefers-color-scheme: light) {
-      :root {
-        --bg-deep: #f0f4ff;
-        --bg-card: rgba(255,255,255,0.85);
-        --bg-card-hover: rgba(255,255,255,0.95);
-        --bg-glass: rgba(255,255,255,0.7);
-        --border: rgba(99,102,241,0.12);
-        --border-bright: rgba(99,102,241,0.25);
-        --primary: #7c3aed;
-        --primary-glow: rgba(124,58,237,0.2);
-        --primary-dim: #5b21b6;
-        --accent: #d97706;
-        --accent-glow: rgba(217,119,6,0.2);
-        --text: #1e1b4b;
-        --text-muted: #6b7280;
-        --text-dim: #9ca3af;
-        --surface-1: rgba(99,102,241,0.04);
-        --surface-2: rgba(99,102,241,0.08);
-        --shadow-sm: 0 2px 8px rgba(99,102,241,0.1);
-        --shadow-md: 0 8px 32px rgba(99,102,241,0.12);
-        --shadow-lg: 0 24px 64px rgba(99,102,241,0.15);
-        --shadow-glow: 0 0 40px var(--primary-glow);
-      }
+    /* ===== DARK THEME ===== */
+    [data-theme="dark"] {
+      --bg-deep: #07071a;
+      --bg-card: rgba(255,255,255,0.04);
+      --bg-card-hover: rgba(255,255,255,0.07);
+      --bg-glass: rgba(255,255,255,0.06);
+      --border: rgba(255,255,255,0.08);
+      --border-bright: rgba(255,255,255,0.15);
+      --primary: #a78bfa;
+      --primary-glow: rgba(167,139,250,0.35);
+      --primary-dim: #7c3aed;
+      --accent: #fbbf24;
+      --accent-glow: rgba(251,191,36,0.2);
+      --text: #e2e8f0;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      --surface-1: rgba(167,139,250,0.06);
+      --surface-2: rgba(167,139,250,0.1);
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+      --shadow-md: 0 8px 32px rgba(0,0,0,0.4);
+      --shadow-lg: 0 24px 64px rgba(0,0,0,0.5);
+      --shadow-glow: 0 0 40px var(--primary-glow);
+    }
+
+    /* ===== LIGHT THEME ===== */
+    [data-theme="light"] {
+      --bg-deep: #f0f4ff;
+      --bg-card: rgba(255,255,255,0.85);
+      --bg-card-hover: rgba(255,255,255,0.95);
+      --bg-glass: rgba(255,255,255,0.7);
+      --border: rgba(99,102,241,0.12);
+      --border-bright: rgba(99,102,241,0.25);
+      --primary: #7c3aed;
+      --primary-glow: rgba(124,58,237,0.2);
+      --primary-dim: #5b21b6;
+      --accent: #d97706;
+      --accent-glow: rgba(217,119,6,0.2);
+      --text: #1e1b4b;
+      --text-muted: #6b7280;
+      --text-dim: #9ca3af;
+      --surface-1: rgba(99,102,241,0.04);
+      --surface-2: rgba(99,102,241,0.08);
+      --shadow-sm: 0 2px 8px rgba(99,102,241,0.1);
+      --shadow-md: 0 8px 32px rgba(99,102,241,0.12);
+      --shadow-lg: 0 24px 64px rgba(99,102,241,0.15);
+      --shadow-glow: 0 0 40px var(--primary-glow);
     }
     
     /* ===== BODY & LAYOUT ===== */
@@ -130,10 +152,44 @@
       padding: 0 20px 60px;
     }
     
+    /* ===== THEME TOGGLE ===== */
+    .theme-toggle {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      z-index: 100;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border-bright);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all var(--t-fast);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      box-shadow: var(--shadow-sm);
+    }
+    .theme-toggle:hover {
+      background: var(--bg-card-hover);
+      border-color: var(--primary);
+      color: var(--primary);
+      transform: scale(1.08);
+    }
+    .theme-toggle svg { width: 18px; height: 18px; }
+    /* Sun shown in dark mode, Moon shown in light mode */
+    [data-theme="dark"] .icon-sun { display: block; }
+    [data-theme="dark"] .icon-moon { display: none; }
+    [data-theme="light"] .icon-sun { display: none; }
+    [data-theme="light"] .icon-moon { display: block; }
+
     /* ===== HEADER ===== */
     header {
       text-align: center;
-      padding: 48px 0 40px;
+      padding: 80px 0 40px;
     }
     .header-eyebrow {
       display: inline-flex;
@@ -459,7 +515,7 @@
       margin-bottom: 4px;
     }
     .number-card .value {
-      font-size: clamp(2rem, 7vw, 3rem);
+      font-size: clamp(60px, 8vw, 80px);
       font-weight: 900;
       line-height: 1;
       background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
@@ -540,7 +596,7 @@
       margin-bottom: 12px;
     }
     .year-number {
-      font-size: 3.5rem;
+      font-size: clamp(60px, 8vw, 80px);
       font-weight: 900;
       letter-spacing: -0.04em;
       background: linear-gradient(135deg, var(--accent), var(--primary));
@@ -701,6 +757,12 @@
 <body>
   <div class="container">
     <header role="banner">
+      <button class="theme-toggle" id="themeToggle" aria-label="切換深色/淺色主題" title="切換主題">
+        <!-- Sun icon (shown in dark mode) -->
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <!-- Moon icon (shown in light mode) -->
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+      </button>
       <div class="header-eyebrow">
         <span></span>
         Numerology
@@ -1341,6 +1403,36 @@
     window.addEventListener('resize', () => {
       if (currentData) drawRadar(currentData);
     });
+
+    /* ======================================================
+       THEME TOGGLE
+    ====================================================== */
+    const html = document.documentElement;
+    const themeToggle = document.getElementById('themeToggle');
+    const sunIcon = themeToggle ? themeToggle.querySelector('.icon-sun') : null;
+    const moonIcon = themeToggle ? themeToggle.querySelector('.icon-moon') : null;
+
+    function applyTheme(theme) {
+      html.setAttribute('data-theme', theme);
+      if (sunIcon && moonIcon) {
+        sunIcon.style.display = theme === 'dark' ? 'block' : 'none';
+        moonIcon.style.display = theme === 'light' ? 'block' : 'none';
+      }
+    }
+
+    // Init theme from localStorage or default to dark
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    applyTheme(savedTheme);
+
+    // Toggle on button click
+    if (themeToggle) {
+      themeToggle.addEventListener('click', () => {
+        const current = html.getAttribute('data-theme');
+        const next = current === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
+        localStorage.setItem('theme', next);
+      });
+    }
   </script>
 </body>
 </html>
